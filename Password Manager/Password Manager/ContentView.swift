@@ -3,38 +3,16 @@ import SwiftUI
 struct ContentView: View {
     @State private var addAccountScene = false
     @State private var viewAccountScene = false
+    @State private var viewInfoScene: Bool = false
     @State private var savedWords: [String] = []
     
     @AppStorage("Accounts") var AccountData: Data = Data()
     @AppStorage("Usernames") var UsernameData: Data = Data()
     @AppStorage("Passwords") var PasswordData: Data = Data()
     
-    var Account: [String] {
-        get {
-            (try? JSONDecoder().decode([String].self, from: AccountData)) ?? []
-        }
-        set {
-            AccountData = try! JSONEncoder().encode(newValue)
-        }
-    }
-        
-    var Username: [String] {
-        get {
-            (try? JSONDecoder().decode([String].self, from: UsernameData)) ?? []
-        }
-        set {
-            UsernameData = try! JSONEncoder().encode(newValue)
-        }
-    }
-
-    var Password: [String] {
-        get {
-            (try? JSONDecoder().decode([String].self, from: PasswordData)) ?? []
-        }
-        set {
-            PasswordData = try! JSONEncoder().encode(newValue)
-        }
-    }
+    @State private var Account: [String] = []
+    @State private var Username: [String] = []
+    @State private var Password: [String] = []
     
     let skyBlue = Color(red: 0.4627, green: 0.8392, blue: 1.0)
     
@@ -44,9 +22,10 @@ struct ContentView: View {
             VStack(spacing: 20) {
                 if addAccountScene {
                     AddAccount(addAccountScene: $addAccountScene, accounts: $Account, usernames: $Username, passwords: $Password)
-
                 } else if viewAccountScene {
-                    ViewAccount(viewAccountScene: $viewAccountScene, savedWords:  $savedWords)
+                    ViewAccount(viewAccountScene: $viewAccountScene, viewInfoScene: $viewInfoScene, accounts: $Account)
+                } else if viewInfoScene {
+                    
                 } else {
                     Button("Add an Account") {
                         addAccountScene.toggle()
@@ -66,6 +45,24 @@ struct ContentView: View {
                 }
             }
         }
+        .onChange(of: AccountData) { newValue in
+                    Account = (try? JSONDecoder().decode([String].self, from: newValue)) ?? []
+                }
+                .onChange(of: UsernameData) { newValue in
+                    Username = (try? JSONDecoder().decode([String].self, from: newValue)) ?? []
+                }
+                .onChange(of: PasswordData) { newValue in
+                    Password = (try? JSONDecoder().decode([String].self, from: newValue)) ?? []
+                }
+                .onChange(of: Account) { newValue in
+                    AccountData = try! JSONEncoder().encode(newValue)
+                }
+                .onChange(of: Username) { newValue in
+                    UsernameData = try! JSONEncoder().encode(newValue)
+                }
+                .onChange(of: Password) { newValue in
+                    PasswordData = try! JSONEncoder().encode(newValue)
+                }
     }
 }
 
@@ -168,21 +165,50 @@ struct AddAccount: View {
 
 struct ViewAccount: View {
     @Binding var viewAccountScene: Bool
-    @Binding var savedWords: [String]
+    @Binding var viewInfoScene: Bool
+    @Binding var accounts: [String]
     
     var body: some View {
         VStack() {
             // Contents for your ViewAccount here
             
-            List(savedWords.indices, id: \.self) { index in
-                Text("Saved Word \(index): \(savedWords[index])")
+            List(accounts.indices, id: \.self) { index in
+                Button(action: {
+                    viewInfoScene = true  // Toggle to show the ViewInfo scene
+                    viewAccountScene = false  // Close the ViewAccount scene
+                }) {
+                    Text(accounts[index])
+                        .foregroundColor(.white)  // set the text color to white
+                        .frame(maxWidth: .infinity, minHeight: 44)  // taking the full width and a minimum height
+                        .border(Color.black)
+                        .background(Color.black)  // set the row background to black
+                }
             }
-            .padding()
-            .foregroundColor(.black)
-            .cornerRadius(60)
+            .listStyle(PlainListStyle())  // Removes default list styling
+            .background(Color.black)  // set the list background to black
             
             Button("Go Back") {
                 viewAccountScene.toggle()
+            }
+            .padding()
+            .background(Color.red)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)  // Make the VStack occupy the entire space
+        .background(Color.black)
+    }
+}
+
+struct ViewInfo: View {
+    @Binding var viewInfoScene: Bool
+    
+    var body: some View {
+        VStack() {
+            Text("Username")
+            
+            Button("Go Back") {
+                viewInfoScene.toggle()
             }
             .padding()
             .background(Color.red)
