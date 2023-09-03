@@ -20,6 +20,18 @@ struct ContentView: View {
     
     let skyBlue = Color(red: 0.4627, green: 0.8392, blue: 1.0)
     
+    init() {
+            if let savedAccounts = try? JSONDecoder().decode([String].self, from: UserDefaults.standard.data(forKey: "Accounts") ?? Data()) {
+                _Account = State(initialValue: savedAccounts)
+            }
+            if let savedUsernames = try? JSONDecoder().decode([String].self, from: UserDefaults.standard.data(forKey: "Usernames") ?? Data()) {
+                _Username = State(initialValue: savedUsernames)
+            }
+            if let savedPasswords = try? JSONDecoder().decode([String].self, from: UserDefaults.standard.data(forKey: "Passwords") ?? Data()) {
+                _Password = State(initialValue: savedPasswords)
+            }
+        }
+    
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
