@@ -5,6 +5,8 @@ struct ContentView: View {
     @State private var viewAccountScene: Bool = false
     @State private var viewInfoScene: Bool = false
     @State private var deleteAccountScene: Bool = false
+    @State private var editAccountScene: Bool = false
+    @State private var editInfoScene: Bool = false
     
     @AppStorage("Accounts") var AccountData: Data = Data()
     @AppStorage("Usernames") var UsernameData: Data = Data()
@@ -18,7 +20,8 @@ struct ContentView: View {
     @State private var usernameSelect: String = ""
     @State private var passwordSelect: String = ""
     
-    let skyBlue = Color(red: 0.4627, green: 0.8392, blue: 1.0)
+    @State private var place: Int = 0
+    
     
     init() {
             if let savedAccounts = try? JSONDecoder().decode([String].self, from: UserDefaults.standard.data(forKey: "Accounts") ?? Data()) {
@@ -44,12 +47,17 @@ struct ContentView: View {
                     ViewInfo(viewInfoScene: $viewInfoScene, accountSelect: $accountSelect, usernameSelect: $usernameSelect, passwordSelect: $passwordSelect)
                 } else if deleteAccountScene {
                     deleteAccount(accounts: $Account, usernames: $Username, passwords: $Password, deleteAccountScene: $deleteAccountScene)
+                } else if editAccountScene {
+                    EditAccount(accounts: $Account, usernames: $Username, passwords: $Password, accountSelect: $accountSelect, usernameSelect: $usernameSelect, passwordSelect: $passwordSelect, place: $place, editAccountScene: $editAccountScene, editInfoScene: $editInfoScene)
+                } else if editInfoScene {
+                    EditInfo(accounts: $Account, usernames: $Username, passwords: $Password, accountSelect: $accountSelect, usernameSelect: $usernameSelect, passwordSelect: $passwordSelect, place: $place, editInfoScene: $editInfoScene)
                 } else {
                     Button("Add an Account") {
                         addAccountScene.toggle()
                         viewAccountScene = false
                         viewInfoScene = false
                         deleteAccountScene = false
+                        editAccountScene = false
                     }
                     .padding()
                     .border(Color.white, width: 1)
@@ -60,6 +68,7 @@ struct ContentView: View {
                         addAccountScene = false
                         viewInfoScene = false
                         deleteAccountScene = false
+                        editAccountScene = false
                     }
                     .padding()
                     .border(Color.white, width: 1)
@@ -67,6 +76,17 @@ struct ContentView: View {
                     
                     Button("Delete an Account") {
                         deleteAccountScene.toggle()
+                        addAccountScene = false
+                        viewAccountScene = false
+                        viewInfoScene = false
+                        editAccountScene = false
+                    }
+                    .padding()
+                    .border(Color.white, width: 1)
+                    .foregroundColor(.white)
+                    
+                    Button("Edit an Account") {
+                        editAccountScene.toggle()
                         addAccountScene = false
                         viewAccountScene = false
                         viewInfoScene = false
@@ -107,7 +127,6 @@ struct AddAccount: View {
     @State private var accountWord: String = ""
     @State private var usernameWord: String = ""
     @State private var passwordWord: String = ""
-    @State private var amount: Int = 0
     @State private var filloutPopup = false
     @State private var accountPopup = false
     
@@ -146,7 +165,6 @@ struct AddAccount: View {
                     accounts.append(accountWord)
                     usernames.append(usernameWord)
                     passwords.append(passwordWord)
-                    amount+=1
                     addAccountScene.toggle()
                 }
             }
@@ -218,6 +236,147 @@ struct deleteAccount: View {
             }
             Button("Go Back") {
                 deleteAccountScene.toggle()
+            }
+            .padding()
+            .background(Color.red)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)  // Make the VStack occupy the entire space
+        .background(Color.black)
+    }
+}
+
+struct EditInfo: View {
+    @Binding var accounts: [String]
+    @Binding var usernames: [String]
+    @Binding var passwords: [String]
+    @Binding var accountSelect: String
+    @Binding var usernameSelect: String
+    @Binding var passwordSelect: String
+    @Binding var place: Int
+    @Binding var editInfoScene: Bool
+    
+    @State private var usernameWord: String = ""
+    @State private var passwordWord: String = ""
+    
+    @State private var filloutPopup: Bool = false
+    
+    var body: some View {
+        VStack() {
+            
+            Text("Account: /(accountSelect)")
+                .padding()
+                .foregroundColor(.white)
+                .font(.title)
+            
+            Text("Previous Username: /(usernameSelect)")
+                .padding()
+                .foregroundColor(.white)
+                .font(.title)
+            Text("Enter a New Username")
+                .padding()
+                .foregroundColor(.white)
+            TextField("Enter a New Username", text: $usernameWord)
+                .padding()
+                .border(Color.white, width: 1)
+                .foregroundColor(.white)
+            
+            Text("Previous Password: /(passwordSelect)")
+                .padding()
+                .foregroundColor(.white)
+                .font(.title)
+            Text("Enter a New Pasword")
+                .padding()
+                .foregroundColor(.white)
+            TextField("Enter a New Password", text: $passwordWord)
+                .padding()
+                .border(Color.white, width: 1)
+                .foregroundColor(.white)
+            
+            Button("Save Info") {
+                if usernameWord.isEmpty || passwordWord.isEmpty {
+                    filloutPopup = true
+                } else {
+                    usernames[place] = usernameWord
+                    passwords[place] = passwordWord
+                    editInfoScene.toggle()
+                }
+            }
+            .padding()
+            .border(Color.white, width: 1)
+            .foregroundColor(.white)
+            
+            if filloutPopup {
+                Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        // Close popup when background is tapped
+                        filloutPopup = false
+                    }
+
+                VStack(spacing: 20) {
+                    Text("You did not fill out all of the requirements")
+                    Button("Close") {
+                        filloutPopup = false
+                    }
+                    .padding()
+                    .background(Color.black)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .frame(width: 300, height: 200)
+                .background(Color.red)
+                .cornerRadius(20)
+                .shadow(radius: 20)
+            }
+            
+            Button("Go Back") {
+                editInfoScene.toggle()
+            }
+            .padding()
+            .background(Color.red)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+        }
+    }
+}
+
+struct EditAccount: View {
+    @Binding var accounts: [String]
+    @Binding var usernames: [String]
+    @Binding var passwords: [String]
+    @Binding var accountSelect: String
+    @Binding var usernameSelect: String
+    @Binding var passwordSelect: String
+    @Binding var place: Int
+    @Binding var editAccountScene: Bool
+    @Binding var editInfoScene: Bool
+    
+    var body: some View {
+        VStack() {
+            List(accounts.indices, id: \.self) { index in
+                Button(action: {
+                    accountSelect = accounts[index]
+                    usernameSelect = usernames[index]
+                    passwordSelect = passwords[index]
+                    place = index
+                    editInfoScene = true
+                    editAccountScene = false
+
+                }) {
+                    Text(accounts[index])
+                        .foregroundColor(.white)  // set the text color to white
+                        .frame(maxWidth: .infinity, minHeight: 44)  // taking the full width and a minimum height
+                        .border(Color.black)
+                        .background(Color.black)  // set the row background to black
+                }
+            }
+            .listStyle(PlainListStyle())  // Removes default list styling
+            .background(Color.black)  // set the list background to black
+            
+            Button("Go Back") {
+                editAccountScene.toggle()
             }
             .padding()
             .background(Color.red)
